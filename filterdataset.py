@@ -1,17 +1,21 @@
 import os
-#download original dataset from link and put in same dir as script
 import pandas as pd
+#download original dataset from link and put in same dir as script
 #original dataset- https://www.kaggle.com/datasets/irkaal/foodcom-recipes-and-reviews
+
 def filter_and_save_data(df, keywords_list, meal_type, output_dir, limit=None):
-    meal_type_keywords = '|'.join(keywords_list)  
-    # filter recipes based on keywords in RecipeCategory and Keywords columns from dataset
+    # create regex pattern from keywords list
+    meal_type_keywords = '|'.join(keywords_list)
+    
+     # filter recipes based on keywords in RecipeCategory and Keywords columns from dataset
     filtered_df = df[
         df['RecipeCategory'].str.contains(meal_type_keywords, case=False, na=False) | 
         df['Keywords'].str.contains(meal_type_keywords, case=False, na=False)
     ]
     
     print(f"Filtered {meal_type.capitalize()}: {filtered_df.shape[0]} records found.")  # Debugging line
-    # If filtered_df not empty then save it
+    
+     # If filtered_df not empty then save it
     if not filtered_df.empty:
         if limit:
             filtered_df = filtered_df.head(limit)
@@ -22,11 +26,24 @@ def filter_and_save_data(df, keywords_list, meal_type, output_dir, limit=None):
         print(f"No records found for {meal_type.capitalize()}. Skipping.")
 
 
+def combine_min_files(min_dir, output_file):
+    # get all csvs
+    csv_files = [os.path.join(min_dir, f) for f in os.listdir(min_dir) if f.endswith('.csv')]
+    # combine into dataframe
+    combined_df = pd.concat([pd.read_csv(f) for f in csv_files], ignore_index=True)
+    combine_dir = os.path.join(min_dir, 'combine') #create dir if not exist
+    os.makedirs(combine_dir, exist_ok=True)
+    #save combine version
+    combined_file_path = os.path.join(combine_dir, 'combined_recipes.csv')
+    combined_df.to_csv(combined_file_path, index=False)
+    print(f"Combined CSV saved to {combined_file_path}")
+
+
 def main():
-    file_path = 'recipes.csv'  # load original large csv 500 mb
+    file_path = 'recipes.csv'  
     df = pd.read_csv(file_path)
     
-    # no 1 for min version with custom number of recipe each csv ,no 2 for full
+    # user choice for dataset generation
     print("Choose dataset generation option:")
     print("1. Minimal version (user-defined record limit per meal type)")
     print("2. Full version (all records per meal type)")
@@ -41,10 +58,9 @@ def main():
     else:
         print("Invalid choice. Exiting.")
         return
-    #create dataset/min or /full we be using min mostly
+    # create output directory 
     os.makedirs(output_dir, exist_ok=True)
-
-    # categories and associated keywords
+    # define categories and associated keywords can add more??
     categories = {
         'breakfast': ['breakfast', 'brunch', 'morning'],
         'lunch': ['lunch', 'sandwich', 'salad', 'soup'],
@@ -56,6 +72,12 @@ def main():
     # filter data for each meal type and save
     for meal_type, keywords in categories.items():
         filter_and_save_data(df, keywords, meal_type, output_dir, limit)
+
+    # ask user if wants to combine all min/ csv files into one medium dataset.
+    if choice == '1':
+        combine_choice = input("Do you want to combine all CSV files in 'min/' into one? (yes or no): ").lower()
+        if combine_choice == 'yes':
+            combine_min_files(output_dir, 'combined_recipes.csv')
 
 if __name__ == "__main__":
     main()
