@@ -11,7 +11,23 @@ nlp = spacy.load("en_core_web_sm")
 
 class RecipeSuggester:
     #def __init__
-
+    def __init__(self, data_dir: str, debug: bool = False):
+        self.debug = debug
+        self.data_dir = data_dir
+        self.recipes_df = self.load_recipes()
+        self.meal_keywords = {
+            'appetizer': ['appetizer', 'starter', 'snack'],
+            'breakfast': ['breakfast', 'brunch', 'morning'],
+            'lunch': ['lunch', 'sandwich', 'salad'],
+            'dinner': ['dinner', 'supper', 'main course'],
+            'dessert': ['dessert', 'sweet', 'cake', 'cookie']
+        }
+        self.prompts = [
+            "What kind of recipe are you in the mood for?",
+            "What would you like to have today?",
+            "Looking for something specific?",
+            "What are you in the mood for?"
+        ]
 
     #def load_recipes
 
