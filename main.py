@@ -30,7 +30,17 @@ class RecipeSuggester:
         ]
 
     #def load_recipes
-
+    def load_recipes(self) -> pd.DataFrame:
+        dfs = []
+        for category_file in ['appetizer.csv', 'breakfast.csv', 'dessert.csv', 'dinner.csv', 'lunch.csv']:
+            file_path = os.path.join(self.data_dir, category_file)
+            if os.path.exists(file_path):
+                df = pd.read_csv(file_path)
+                df['meal_type'] = category_file.split('.')[0]
+                dfs.append(df)
+                if self.debug:
+                    print(f"Loaded recipes from: {file_path}")
+        return pd.concat(dfs, ignore_index=True)
 
     #def analyze_user_input
 
