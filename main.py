@@ -42,7 +42,24 @@ class RecipeSuggester:
                     print(f"Loaded recipes from: {file_path}")
         return pd.concat(dfs, ignore_index=True)
 
-    #def analyze_user_input
+    def analyze_user_input(self, text: str) -> str:
+        # determine the meal type based on user input.
+        doc = nlp(text.lower())
+        meal_scores = defaultdict(int)
+        
+        for token in doc:
+            for meal_type, keywords in self.meal_keywords.items():
+                if token.text in keywords:
+                    meal_scores[meal_type] += 1
+        
+        if self.debug:
+            print(f"Meal type scores from user input '{text}': {dict(meal_scores)}")
+        
+        # select meal type with the highest score if any match
+        if meal_scores:
+            return max(meal_scores, key=meal_scores.get)
+        
+        return "dinner"  # default to 'dinner' if no keywords match change to time maybe later? default option??
 
 
     #def get_recipe_suggestions
