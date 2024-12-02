@@ -15,7 +15,7 @@ The goal of the project is to develop a suggestion system that uses natural lang
 6. Testing/debugging 
 
 ### How to Compile and Run: 
-[to be completed]
+An in-depth explanation of the code and how to run it can be found in the project's readme.txt file, located [here](https://github.com/hkwheat/6320_recipe_suggestor/blob/main/readme.txt).
 
 ### Dataset:
 [Food.com - Recipes and Reviews](https://www.kaggle.com/datasets/irkaal/foodcom-recipes-and-reviews)
