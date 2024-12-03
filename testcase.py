@@ -1,7 +1,7 @@
 import os
 import json
 from datetime import datetime, timedelta
-from finalv2 import RecipeSuggester, UserManager, UserProfile, MAX_WEIGHT
+from main import RecipeSuggester, UserManager, UserProfile, MAX_WEIGHT #from filename 
 
 # Paths to data and user directories
 data_dir = 'dataset/min'
