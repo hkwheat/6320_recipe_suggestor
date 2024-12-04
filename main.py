@@ -115,9 +115,6 @@ class UserManager:
         except Exception as e:
             print(f"Error saving profile for user {profile.user_id}: {e}")  # print error message
 
-
-
-
 class RecipeSuggester:
     def __init__(self, data_dir: str, debug: bool = False):
         self.debug = debug  # enable or disable debug mode
@@ -150,8 +147,9 @@ class RecipeSuggester:
                     print(f"Loaded recipes from: {file_path}")  # print the file path of the loaded file
         return pd.concat(dfs, ignore_index=True)  # combine all dataframes into one and return it
 
+   
     def analyze_user_input(self, text: str) -> str:
-        #determine the meal type based on user input
+        # determine the meal type based on user input
         doc = nlp(text.lower())  # process the input text using spaCy for NLP
         meal_scores = defaultdict(float)  # initialize a default dictionary to store scores for meal types
         for token in doc:  # iterate through each token in the processed text
@@ -165,7 +163,7 @@ class RecipeSuggester:
         return "dinner"  # default to 'dinner' if no keywords match
 
     def get_recipe_suggestions(self, profile: UserProfile, text: str, num_suggestions: int = 3, include_liked_probability: float = 0.2) -> List[Dict]:
-        #generate recipe suggestions based on user input and profile preferences
+        # generate recipe suggestions based on user input and profile preferences
         meal_type = self.analyze_user_input(text)  # determine the meal type from user input
         meal_recipes = self.recipes_df[self.recipes_df['meal_type'] == meal_type].copy()  # filter recipes by meal type
 
@@ -207,116 +205,121 @@ class RecipeSuggester:
         return suggestions.to_dict('records')  # return the top recipes as a list of dictionaries
 
     def update_user_preference(self, profile: UserProfile, recipe_id: str, recipe_name: str, liked: bool):
-        #update user preferences for a recipe, including meal type preference
-        if liked:  # if the user liked the recipe
-            # add recipe to liked_recipes if not already liked
-            if not any(r['recipe_id'] == recipe_id for r in profile.preferences['liked_recipes']):  # check if recipe is not already liked
-                profile.preferences['liked_recipes'].append({"recipe_id": recipe_id, "recipe_name": recipe_name})  # add to liked recipes
-            
-            # retrieve recipe details and update meal type weight
-            recipe = self.recipes_df[self.recipes_df['RecipeId'].astype(str) == str(recipe_id)]  # filter recipe by id
-            if not recipe.empty:  # if recipe exists
-                meal_type = recipe['meal_type'].iloc[0]  # get the meal type of the recipe
-                profile.update_weight(meal_type)  # update the weight for the meal type
-                print(f"Updated meal type preference for '{meal_type}' to {profile.preferences['meal_type_preferences'][meal_type]}")  # print update
+        # update user preferences for a recipe, including meal type preference
+        if liked:
+            if not any(r['recipe_id'] == recipe_id for r in profile.preferences['liked_recipes']):
+                profile.preferences['liked_recipes'].append({"recipe_id": recipe_id, "recipe_name": recipe_name})
+
+            # Retrieve recipe details using RecipeId
+            recipe = self.recipes_df[self.recipes_df['RecipeId'].astype(str) == str(recipe_id)]
+            if not recipe.empty:
+                meal_type = recipe['meal_type'].iloc[0]  # Ensure meal_type exists
+
+                # Update meal type preference
+                profile.update_weight(meal_type)
+                print(f"Updated meal type preference for '{meal_type}' to {profile.preferences['meal_type_preferences'][meal_type]}")
             else:
-                print(f"Meal type not found for recipe '{recipe_name}' (ID: {recipe_id})")  # print error if recipe not found
-        else:  # if the user disliked the recipe
-            # add recipe to disliked_recipes if not already disliked
-            if not any(r['recipe_id'] == recipe_id for r in profile.preferences['disliked_recipes']):  # check if recipe is not already disliked
-                profile.preferences['disliked_recipes'].append({"recipe_id": recipe_id, "recipe_name": recipe_name})  # add to disliked recipes
-            
-        # update the recipe rating
-        profile.recipe_ratings[recipe_id] += 1 if liked else 0  # increment rating if liked, otherwise leave unchanged
+                print(f"Error: Recipe with ID '{recipe_id}' not found.")
+        else:
+            if not any(r['recipe_id'] == recipe_id for r in profile.preferences['disliked_recipes']):
+                profile.preferences['disliked_recipes'].append({"recipe_id": recipe_id, "recipe_name": recipe_name})
 
-        # save profile to confirm updates
-        self.user_manager.save_user_profile(profile)  # save the updated profile
+        profile.recipe_ratings[recipe_id] += 1 if liked else 0
+        self.user_manager.save_user_profile(profile)
 
-        if self.debug:  # if debug mode is enabled
-            print(f"Updated preferences for user '{profile.user_id}': {'Liked' if liked else 'Disliked'} recipe '{recipe_id}' - {recipe_name}")  # print update
-            print(f"Updated meal_type_preferences: {profile.preferences['meal_type_preferences']}")  # print updated meal type preferences
+        if self.debug:
+            print(f"Updated preferences for user '{profile.user_id}': {'Liked' if liked else 'Disliked'} recipe '{recipe_id}' - {recipe_name}")
+            print(f"Updated meal_type_preferences: {profile.preferences['meal_type_preferences']}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Recipe Suggestion System")  # create an argument parser for the script
-    parser.add_argument('--debug', action='store_true', help="Enable debug mode")  # add an optional debug mode argument
-    args = parser.parse_args()  # parse the command-line arguments
+            parser = argparse.ArgumentParser(description="Recipe Suggestion System")  # create an argument parser for the script
+            parser.add_argument('--debug', action='store_true', help="Enable debug mode")  # add an optional debug mode argument
+            args = parser.parse_args()  # parse the command-line arguments
 
-    suggester = RecipeSuggester('dataset/min', debug=args.debug)  # initialize the RecipeSuggester with the dataset directory and debug mode
-    username = input("Please enter your username: ").strip()  # prompt the user to enter their username
-    profile = suggester.user_manager.load_user_profile(username)  # load the user's profile based on their username
+            suggester = RecipeSuggester('dataset/min', debug=args.debug)  # initialize the RecipeSuggester with the dataset directory and debug mode
+            username = input("Please enter your username: ").strip()  # prompt the user to enter their username
+            profile = suggester.user_manager.load_user_profile(username)  # load the user's profile based on their username
 
-    print("\nRecipe Suggestion System")  # print the system's header
-    print("Type 'quit' to exit, 'stats' to see your profile stats")  # provide usage instructions to the user
+            print("\nRecipe Suggestion System")  # print the system's header
+            print("Type 'quit' to exit, 'stats' to see your profile stats")  # provide usage instructions to the user
 
-    while True:  # enter an infinite loop to keep interacting with the user
-        # randomly display one of the predefined prompts to the user
-        command = input(f"\n{random.choice(suggester.prompts)} ").strip().lower()  # get user input and normalize to lowercase
-        
-        if command == 'quit':  # if the user types 'quit', exit the loop
-            break
-        elif command == 'stats':  # if the user types 'stats', display their profile statistics
-            print(f"\nProfile Statistics for {username}:")  # display the username
-            print(f"Total suggestions received: {profile.total_suggestions_received}")  # display total suggestions received
-            print(f"Total interactions: {profile.total_interactions}")  # display total interactions
-            print(f"Liked recipes: {len(profile.preferences['liked_recipes'])}")  # display count of liked recipes
-            print(f"Meal type preferences: {dict(profile.preferences['meal_type_preferences'])}")  # display meal type preferences
-            continue  # skip to the next iteration of the loop
+            while True:  # enter an infinite loop to keep interacting with the user
+                # randomly display one of the predefined prompts to the user
+                command = input(f"\n{random.choice(suggester.prompts)} ").strip().lower()  # get user input and normalize to lowercase
 
-        # get recipe suggestions based on the user input
-        suggestions = suggester.get_recipe_suggestions(profile, command)  # fetch suggestions based on the command
-        
-        if not suggestions:  # if no suggestions are found
-            print("No matching recipes found.")  # inform the user
-            continue  # skip to the next iteration of the loop
+                if command == 'quit':  # if the user types 'quit', exit the loop
+                    break
+                elif command == 'stats':  # if the user types 'stats', display their profile statistics
+                    print(f"\nProfile Statistics for {username}:")  # display the username
+                    print(f"Total suggestions received: {profile.total_suggestions_received}")  # display total suggestions received
+                    print(f"Total interactions: {profile.total_interactions}")  # display total interactions
+                    print(f"Liked recipes: {len(profile.preferences['liked_recipes'])}")  # display count of liked recipes
+                    print(f"Meal type preferences: {dict(profile.preferences['meal_type_preferences'])}")  # display meal type preferences
+                    continue  # skip to the next iteration of the loop
 
-        for i, recipe in enumerate(suggestions, 1):  # iterate over the suggested recipes
-            print(f"\n{i}. {recipe['Name']}")  # display the recipe name with its index
-            print(f"   Preparation Time: {recipe.get('PrepTime', 'N/A')}")  # display the preparation time or 'N/A' if not available
-            if pd.notna(recipe.get('AggregatedRating')):  # if the aggregated rating exists
-                print(f"   Rating: {recipe['AggregatedRating']:.1f}/5.0")  # display the rating
-            if pd.notna(recipe.get('ReviewCount')):  # if the review count exists
-                print(f"   Number of Reviews: {recipe['ReviewCount']}")  # display the number of reviews
+                # get recipe suggestions based on the user input
+                suggestions = suggester.get_recipe_suggestions(profile, command)  # fetch suggestions based on the command
 
-        # prompt the user to indicate if they liked any of the suggested recipes
-        while True:  # enter a loop to handle user feedback
-            feedback = input("\nDid you like any of these recipes? (Enter recipe number, 'n' for none, or 'more' for more options): ").strip().lower()  # prompt for feedback
-            if feedback.isdigit() and 1 <= int(feedback) <= len(suggestions):  # if feedback is a valid recipe number
-                recipe = suggestions[int(feedback) - 1]  # get the selected recipe
-                
-                # ask if the user liked or disliked the selected recipe
-                like_dislike = input(f"\nDid you like {recipe['Name']}? (yes or no): ").strip().lower()  # ask for a like/dislike response
-                liked = like_dislike == 'yes'  # determine if the response is 'yes'
-                
-                # update the user's preference based on their feedback
-                suggester.update_user_preference(profile, recipe['RecipeId'], recipe['Name'], liked=liked)  # update preferences
-                
-                # thank the user for their feedback
-                if liked:  # if the user liked the recipe
-                    print(f"Great! {recipe['Name']} has been added to your liked recipes.")  # confirm addition to liked recipes
-                else:  # if the user disliked the recipe
-                    print(f"{recipe['Name']} has been marked as disliked.")  # confirm marking as disliked
-                break  # exit the feedback loop
+                if not suggestions:  # if no suggestions are found
+                    print("No matching recipes found.")  # inform the user
+                    continue  # skip to the next iteration of the loop
 
-            elif feedback == 'n':  # if the user indicates they liked none of the recipes
-                print("Got it. Let's find more options for you.")  # acknowledge and move on
-                break  # exit the feedback loop
-            elif feedback == 'more':  # if the user requests more suggestions
-                print("Fetching more options...")  # indicate that more suggestions are being fetched
-                break  # exit the feedback loop
-            else:  # if the input is invalid
-                print("Please enter a valid option.")  # prompt the user to try again
+                for i, recipe in enumerate(suggestions, 1):  # iterate over the suggested recipes
+                    print(f"\n{i}. {recipe['Name']}")  # display the recipe name with its index
+                    print(f"   Preparation Time: {recipe.get('PrepTime', 'N/A')}")  # display the preparation time or 'N/A' if not available
+                    if pd.notna(recipe.get('AggregatedRating')):  # if the aggregated rating exists
+                        print(f"   Rating: {recipe['AggregatedRating']:.1f}/5.0")  # display the rating
+                    if pd.notna(recipe.get('ReviewCount')):  # if the review count exists
+                        print(f"   Number of Reviews: {recipe['ReviewCount']}")  # display the number of reviews
 
-        # if user requests more, continue with new suggestions in the next loop iteration
-        if feedback == 'more':  # if the user asked for more options
-            continue  # skip to the next iteration
-        elif feedback == 'n':  # if the user liked none of the suggestions
-            print("No more suggestions available at this time.")  # inform the user
-            break  # exit the loop
+                while True:  # enter a loop to handle user feedback
+                    feedback = input("\nDid you like any of these recipes? (Enter recipe number, 'n' for none, or 'more' for more options): ").strip().lower()  # prompt for feedback
+                    if feedback.isdigit() and 1 <= int(feedback) <= len(suggestions):  # if feedback is a valid recipe number
+                        recipe = suggestions[int(feedback) - 1]  # get the selected recipe
 
-    # save the user's profile before exiting the program
-    suggester.user_manager.save_user_profile(profile)  # persist the updated profile
-    print(f"\nGoodbye {username}! Your profile has been saved.")  # print a farewell message
+                        # Display recipe instructions immediately after selection
+                        recipe_id = recipe['RecipeId']
+                        recipe_name = recipe['Name']
+                        instructions = suggester.recipes_df[suggester.recipes_df['RecipeId'].astype(str) == str(recipe_id)]['RecipeInstructions'].iloc[0]
+
+                        print(f"\nRecipe Instructions for '{recipe_name}':")
+                        print(instructions if instructions else "No instructions available.")  # Print the instructions or fallback message
+
+                        # ask if the user liked or disliked the selected recipe
+                        like_dislike = input(f"\nDid you like {recipe_name}? (yes or no): ").strip().lower()  # ask for a like/dislike response
+                        liked = like_dislike == 'yes'  # determine if the response is 'yes'
+
+                        # update the user's preference based on their feedback
+                        suggester.update_user_preference(profile, recipe_id, recipe_name, liked=liked)  # update preferences
+
+                        # thank the user for their feedback
+                        if liked:  # if the user liked the recipe
+                            print(f"Great! {recipe_name} has been added to your liked recipes.")  # confirm addition to liked recipes
+                        else:  # if the user disliked the recipe
+                            print(f"{recipe_name} has been marked as disliked.")  # confirm marking as disliked
+                        break  # exit the feedback loop
+
+                    elif feedback == 'n':  # if the user indicates they liked none of the recipes
+                        print("Got it. Let's find more options for you.")  # acknowledge and move on
+                        break  # exit the feedback loop
+                    elif feedback == 'more':  # if the user requests more suggestions
+                        print("Fetching more options...")  # indicate that more suggestions are being fetched
+                        break  # exit the feedback loop
+                    else:  # if the input is invalid
+                        print("Please enter a valid option.")  # prompt the user to try again
+
+
+                # if user requests more, continue with new suggestions in the next loop iteration
+                if feedback == 'more':  # if the user asked for more options
+                    continue  # skip to the next iteration
+                elif feedback == 'n':  # if the user liked none of the suggestions
+                    print("No more suggestions available at this time.")  # inform the user
+                    break  # exit the loop
+
+            # save the user's profile before exiting the program
+            suggester.user_manager.save_user_profile(profile)  # persist the updated profile
+            print(f"\nGoodbye {username}! Your profile has been saved.")  # print a farewell message
 
 if __name__ == "__main__":
     main()  # execute the main function
