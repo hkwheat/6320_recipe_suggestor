@@ -6,6 +6,8 @@
 ### Project Description:
 The goal of the project is to develop a suggestion system that uses natural language processing (NLP) to understand a user's input and suggest recipes for them. We've classified recipes into the following categories: appetizers, breakfast, lunch, dinner, or dessert. If the user's input is unclear, then it will suggest a recipe based on the current time of day. Additionally, a user profile will be created that keeps track of their likes and dislikes; this will be taken into account when the system suggests new recipes. 
 
+![demo](https://github.com/hkwheat/6320_recipe_suggestor/blob/fix_readme/demo.jpg?raw=true)
+
 ### Project Scope:
 1. Filter recipes based on meal types (i.e., appetizer, breakfast, lunch, dinner, dessert)
 2. Use NLP to understand user input and put them into appropriate category meal types
